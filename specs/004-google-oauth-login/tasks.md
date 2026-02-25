@@ -19,7 +19,7 @@
 
 ## Phase 1 — BDD First
 
-- [ ] T001 [US1] BDD — Crear `features/identity/US1.feature` con los 5 escenarios de spec.md (primer acceso, recurrente, ruta protegida, cierre de sesión, cancelación) + step definitions en `${basePackage}/identity/bdd/steps/` en estado PENDING. **Criterio**: `mvn test -Dcucumber.filter.tags=@identity` ejecuta sin UNDEFINED steps.
+- [x] T001 [US1] BDD — Crear `features/identity/US1.feature` con los 5 escenarios de spec.md (primer acceso, recurrente, ruta protegida, cierre de sesión, cancelación) + step definitions en `${basePackage}/identity/bdd/steps/` en estado PENDING. **Criterio**: `mvn test -Dcucumber.filter.tags=@identity` ejecuta sin UNDEFINED steps.
 
 ---
 
