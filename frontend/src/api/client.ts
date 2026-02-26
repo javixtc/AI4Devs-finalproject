@@ -89,7 +89,7 @@ export async function generateText(
 ): Promise<TextContentResponse> {
   const response = await fetch(`${BASE_URL}/compositions/${compositionId}/text/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(request ?? {}),
   });
   return handleResponse<TextContentResponse>(response);
@@ -103,7 +103,7 @@ export async function generateTextGlobal(
 ): Promise<TextContentResponse> {
   const response = await fetch(`${BASE_URL}/compositions/text/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(request ?? {}),
   });
   return handleResponse<TextContentResponse>(response);
@@ -116,7 +116,7 @@ export async function generateTextGlobal(
 export async function generateImage(compositionId: string): Promise<ImageReferenceResponse> {
   const response = await fetch(`${BASE_URL}/compositions/${compositionId}/image/generate`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
   });
   return handleResponse<ImageReferenceResponse>(response);
 }
@@ -130,7 +130,7 @@ export async function selectMusic(
 ): Promise<CompositionResponse> {
   const response = await fetch(`${BASE_URL}/compositions/${compositionId}/music`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(request),
   });
   return handleResponse<CompositionResponse>(response);
@@ -145,7 +145,7 @@ export async function setImage(
 ): Promise<CompositionResponse> {
   const response = await fetch(`${BASE_URL}/compositions/${compositionId}/image`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
     body: JSON.stringify(request),
   });
   return handleResponse<CompositionResponse>(response);
@@ -157,6 +157,7 @@ export async function setImage(
 export async function removeImage(compositionId: string): Promise<CompositionResponse> {
   const response = await fetch(`${BASE_URL}/compositions/${compositionId}/image`, {
     method: 'DELETE',
+    headers: { ...getAuthHeaders() },
   });
   return handleResponse<CompositionResponse>(response);
 }
@@ -166,7 +167,9 @@ export async function removeImage(compositionId: string): Promise<CompositionRes
  * Returns PODCAST when no image, VIDEO when image present
  */
 export async function getOutputType(compositionId: string): Promise<OutputTypeResponse> {
-  const response = await fetch(`${BASE_URL}/compositions/${compositionId}/output-type`);
+  const response = await fetch(`${BASE_URL}/compositions/${compositionId}/output-type`, {
+    headers: { ...getAuthHeaders() },
+  });
   return handleResponse<OutputTypeResponse>(response);
 }
 
@@ -174,7 +177,9 @@ export async function getOutputType(compositionId: string): Promise<OutputTypeRe
  * Capability 7: Preview Selected Music
  */
 export async function previewMusic(compositionId: string): Promise<MusicPreviewResponse> {
-  const response = await fetch(`${BASE_URL}/compositions/${compositionId}/preview/music`);
+  const response = await fetch(`${BASE_URL}/compositions/${compositionId}/preview/music`, {
+    headers: { ...getAuthHeaders() },
+  });
   return handleResponse<MusicPreviewResponse>(response);
 }
 
@@ -182,6 +187,8 @@ export async function previewMusic(compositionId: string): Promise<MusicPreviewR
  * Capability 8: Preview Image
  */
 export async function previewImage(compositionId: string): Promise<ImagePreviewResponse> {
-  const response = await fetch(`${BASE_URL}/compositions/${compositionId}/preview/image`);
+  const response = await fetch(`${BASE_URL}/compositions/${compositionId}/preview/image`, {
+    headers: { ...getAuthHeaders() },
+  });
   return handleResponse<ImagePreviewResponse>(response);
 }

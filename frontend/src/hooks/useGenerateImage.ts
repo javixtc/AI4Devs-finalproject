@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ImageReferenceResponse, ApiError } from '@/api/types';
 import { useComposerStore } from '@/state/composerStore';
 import { API_BASE_URL } from '@/config';
+import { getAuthHeaders } from '@/api/authHeader';
 
 interface UseGenerateImageOptions {
   prompt?: string;
@@ -29,7 +30,7 @@ export function useGenerateImage({ prompt, onSuccess, onError }: UseGenerateImag
       if (!textPrompt) throw new Error('No prompt provided');
       const response = await fetch(`${API_BASE_URL}/api/v1/compositions/image/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'text/plain' },
+        headers: { 'Content-Type': 'text/plain', ...getAuthHeaders() },
         body: textPrompt,
       });
       if (!response.ok) {
