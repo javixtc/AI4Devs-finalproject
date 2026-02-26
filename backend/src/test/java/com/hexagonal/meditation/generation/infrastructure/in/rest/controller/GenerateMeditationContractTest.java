@@ -9,10 +9,13 @@ import com.hexagonal.meditation.generation.domain.ports.out.ContentRepositoryPor
 import com.hexagonal.meditation.generation.infrastructure.in.rest.dto.GenerateMeditationRequest;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -20,11 +23,20 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.filter.OncePerRequestFilter;
 
+import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
@@ -53,11 +65,41 @@ public class GenerateMeditationContractTest {
     @ComponentScan(basePackageClasses = {
             com.hexagonal.meditation.generation.infrastructure.in.rest.controller.MeditationGenerationController.class,
             com.hexagonal.meditation.generation.infrastructure.in.rest.mapper.MeditationOutputDtoMapper.class
-    })
+    }, excludeFilters = @ComponentScan.Filter(
+            type = org.springframework.context.annotation.FilterType.ANNOTATION,
+            classes = org.springframework.boot.test.context.TestConfiguration.class
+    ))
     public static class TestConfig {
+
         @Bean
         public Clock clock() {
             return Clock.systemUTC();
+        }
+
+        /** Permit all — security is validated separately; contract test focuses on API shape. */
+        @Bean
+        @Order(Integer.MIN_VALUE)
+        public SecurityFilterChain contractTestSecurityFilterChain(HttpSecurity http) throws Exception {
+            http
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
+                .addFilterBefore(new OncePerRequestFilter() {
+                    @Override
+                    protected void doFilterInternal(HttpServletRequest req,
+                                                    HttpServletResponse res,
+                                                    FilterChain chain)
+                            throws ServletException, IOException {
+                        String userId = req.getHeader("X-User-ID");
+                        if (userId != null) {
+                            var auth = new UsernamePasswordAuthenticationToken(
+                                    UUID.fromString(userId), null, List.of());
+                            SecurityContextHolder.getContext().setAuthentication(auth);
+                        }
+                        chain.doFilter(req, res);
+                    }
+                }, org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class);
+            return http.build();
         }
     }
 
