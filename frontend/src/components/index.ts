@@ -10,3 +10,4 @@ export { GenerateImageButton } from './GenerateImageButton';
 export { GenerationStatusBar } from './GenerationStatusBar';
 export { GenerateMeditationButton } from './GenerateMeditationButton';
 export { GenerationResultModal } from './GenerationResultModal';
+export { AuthGuard } from './AuthGuard';
