@@ -31,13 +31,13 @@
 
 ## Phase 3 — Domain
 
-- [ ] T003 [US1] Domain — Implementar aggregate root `PerfilDeUsuario` como Java record (id UUID, identificadorGoogle, correo, nombre, urlFoto, creadoEn con Clock inyectado) + invariantes (unicidad por identificadorGoogle, inmutabilidad) + puertos in (`AutenticarConGooglePort`, `CerrarSesionPort`) + puertos out (`BuscarPerfilPorGoogleIdPort`, `PersistirPerfilPort`, `ValidarCredencialGooglePort`, `EmitirTokenSesionPort`). Sin dependencias Spring. **Criterio**: tests unitarios de dominio en verde; build sin imports de frameworks.
+- [x] T003 [US1] Domain — Implementar aggregate root `PerfilDeUsuario` como Java record (id UUID, identificadorGoogle, correo, nombre, urlFoto, creadoEn con Clock inyectado) + invariantes (unicidad por identificadorGoogle, inmutabilidad) + puertos in (`AutenticarConGooglePort`, `CerrarSesionPort`) + puertos out (`BuscarPerfilPorGoogleIdPort`, `PersistirPerfilPort`, `ValidarCredencialGooglePort`, `EmitirTokenSesionPort`). Sin dependencias Spring. **Criterio**: tests unitarios de dominio en verde; build sin imports de frameworks.
 
 ---
 
 ## Phase 4 — Application
 
-- [ ] T004 [US1] Application — Implementar `IniciarSesionConGoogleUseCase` (valida credencial → busca o crea PerfilDeUsuario → emite token de sesión) y `CerrarSesionUseCase` (invalida token). Orquestación pura vía los puertos de salida. **Criterio**: tests unitarios con mocks de todos los ports out; sin lógica de negocio en esta capa.
+- [x] T004 [US1] Application — Implementar `IniciarSesionConGoogleUseCase` (valida credencial → busca o crea PerfilDeUsuario → emite token de sesión) y `CerrarSesionUseCase` (invalida token). Orquestación pura vía los puertos de salida. **Criterio**: tests unitarios con mocks de todos los ports out; sin lógica de negocio en esta capa.
 
 ---
 
