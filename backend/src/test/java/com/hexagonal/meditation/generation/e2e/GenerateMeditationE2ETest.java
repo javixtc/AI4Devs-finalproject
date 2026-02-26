@@ -1,14 +1,20 @@
 package com.hexagonal.meditation.generation.e2e;
 
+import com.hexagonal.identity.domain.model.GoogleUserInfo;
+import com.hexagonal.identity.domain.ports.out.ValidarCredencialGooglePort;
 import com.hexagonal.meditation.generation.domain.enums.GenerationStatus;
 import com.hexagonal.meditation.generation.infrastructure.in.rest.dto.GenerateMeditationRequest;
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
@@ -40,6 +46,9 @@ public class GenerateMeditationE2ETest {
 
     @LocalServerPort
     private int port;
+
+    @MockBean
+    ValidarCredencialGooglePort validarCredencialPort;
 
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
@@ -84,12 +93,27 @@ public class GenerateMeditationE2ETest {
         java.nio.file.Files.write(java.nio.file.Path.of("music-catalog/zen-02.mp3"), new byte[100]);
         java.nio.file.Files.write(java.nio.file.Path.of("music-catalog/music-123"), new byte[100]);
         java.nio.file.Files.write(java.nio.file.Path.of("image-catalog/forest-01.jpg"), new byte[100]);
+
+        // Authenticate and set JWT for all requests
+        Mockito.when(validarCredencialPort.validar("e2e-gen-token"))
+               .thenReturn(new GoogleUserInfo("e2e-gen-sub-001", "e2e-gen@test.com", "E2E Gen User", null));
+        String jwt = given()
+                .contentType(ContentType.JSON)
+                .body("{\"idToken\":\"e2e-gen-token\"}")
+                .post("/v1/identity/auth/google")
+                .then().statusCode(200).extract().path("sessionToken");
+        RestAssured.requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", "Bearer " + jwt).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        RestAssured.reset();
     }
 
     @Test
     @DisplayName("Complete flow: Request -> Generate -> Store -> Persist (VIDEO)")
     void shouldCompleteFullFlowForVideo() {
-        UUID userId = UUID.randomUUID();
         UUID compositionId = UUID.randomUUID();
 
         GenerateMeditationRequest request = new GenerateMeditationRequest(
@@ -100,7 +124,6 @@ public class GenerateMeditationE2ETest {
 
         given()
                 .contentType(ContentType.JSON)
-                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()
@@ -118,7 +141,6 @@ public class GenerateMeditationE2ETest {
     @Test
     @DisplayName("Complete flow: Request -> Generate -> Store -> Persist (AUDIO)")
     void shouldCompleteFullFlowForAudio() {
-        UUID userId = UUID.randomUUID();
         UUID compositionId = UUID.randomUUID();
 
         GenerateMeditationRequest request = new GenerateMeditationRequest(
@@ -129,7 +151,6 @@ public class GenerateMeditationE2ETest {
 
         given()
                 .contentType(ContentType.JSON)
-                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()
@@ -145,7 +166,6 @@ public class GenerateMeditationE2ETest {
     @Test
     @DisplayName("Idempotency: Repeated request should return same meditation ID")
     void shouldBeIdempotent() {
-        UUID userId = UUID.randomUUID();
         UUID compositionId = UUID.randomUUID();
 
         GenerateMeditationRequest request = new GenerateMeditationRequest(
@@ -156,7 +176,6 @@ public class GenerateMeditationE2ETest {
 
         String firstMeditationId = given()
                 .contentType(ContentType.JSON)
-                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()
@@ -167,7 +186,6 @@ public class GenerateMeditationE2ETest {
 
         given()
                 .contentType(ContentType.JSON)
-                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()

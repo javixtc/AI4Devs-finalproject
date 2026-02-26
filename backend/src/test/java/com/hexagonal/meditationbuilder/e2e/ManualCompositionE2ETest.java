@@ -1,10 +1,15 @@
 package com.hexagonal.meditationbuilder.e2e;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
+import com.hexagonal.identity.domain.model.GoogleUserInfo;
+import com.hexagonal.identity.domain.ports.out.ValidarCredencialGooglePort;
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.*;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -35,6 +40,9 @@ class ManualCompositionE2ETest {
 
     @LocalServerPort
     private int port;
+
+    @MockBean
+    private ValidarCredencialGooglePort validarCredencialPort;
 
     private static WireMockServer mediaCatalogServer;
 
@@ -74,6 +82,20 @@ class ManualCompositionE2ETest {
     void setup() {
         RestAssured.port = port;
         RestAssured.basePath = "/api";
+        Mockito.when(validarCredencialPort.validar("e2e-comp-token"))
+               .thenReturn(new GoogleUserInfo("e2e-comp-sub-001", "e2e-comp@test.com", "E2E Comp User", null));
+        String jwt = given()
+                .contentType(ContentType.JSON)
+                .body("{\"idToken\":\"e2e-comp-token\"}")
+                .post("/v1/identity/auth/google")
+                .then().statusCode(200).extract().path("sessionToken");
+        RestAssured.requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", "Bearer " + jwt).build();
+    }
+
+    @AfterEach
+    void tearDown() {
+        RestAssured.reset();
     }
 
     @Test
