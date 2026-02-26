@@ -67,15 +67,15 @@
 
 ## Phase 8 — Contracts
 
-- [X] T011 [P] [US1] Contract tests
+- [X] T011 [P] [US1] Contract tests — Tests provider/consumer contra `openapi/identity/US1.yaml`: verificar que `AuthController` honra exactamente el contrato (C1, C2, C4). Validar también que el filtro `shared/security` acepta el JWT propio y proporciona el `userId` correcto a los otros BCs. **Paths**: `backend/src/test/contracts/`. **Criterio**: todos los contract tests en verde; ninguna desviación del contrato OpenAPI.
 
 ---
 
 ## Phase 9 — E2E
 
-- [X] T012 [US1] E2E backend
+- [X] T012 [US1] E2E backend — Flujo completo con credencial de Google simulada: autenticación → JWT → acceso a recurso protegido de un BC existente. Flujo de cierre de sesión → intento de acceso rechazado (401). **Paths**: `${basePackage}/identity/e2e/`. **Criterio**: todos los escenarios E2E backend en verde.
 
-- [X] T013 [P] [US1] E2E frontend (Playwright)
+- [X] T013 [P] [US1] E2E frontend (Playwright) — Cubrir los 5 escenarios BDD con Google mockeado (sin llamadas reales a Google en CI): login nuevo → biblioteca vacía; login recurrente → biblioteca con meditaciones; acceso a `/library` sin sesión → `/login`; cierre de sesión → pantalla de acceso; cancelación del flujo Google → pantalla de acceso sin error. **Paths**: `frontend/tests/e2e/`. **Criterio**: todos los tests Playwright en verde en chromium; `npm run test:e2e` sin fallos.
 
 ---
 
