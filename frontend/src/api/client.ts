@@ -18,13 +18,9 @@ import type {
 } from './types';
 import { ApiError } from './types';
 import { API_BASE_URL } from '../config';
+import { getAuthHeaders } from './authHeader';
 
 const BASE_URL = `${API_BASE_URL}/api/v1`;
-
-/**
- * MVP User ID (hardcoded until US1 authentication is implemented)
- */
-const MVP_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 async function handleResponse<T>(response: Response): Promise<T> {
   if (!response.ok) {
@@ -47,7 +43,7 @@ export async function createComposition(request?: { text?: string }): Promise<Co
     method: 'POST',
     headers: { 
       'Content-Type': 'application/json',
-      'X-User-Id': MVP_USER_ID
+      ...getAuthHeaders()
     },
     body: JSON.stringify(request ?? { text: '' }),
   });
@@ -59,7 +55,7 @@ export async function createComposition(request?: { text?: string }): Promise<Co
  */
 export async function getComposition(compositionId: string): Promise<CompositionResponse> {
   const response = await fetch(`${BASE_URL}/compositions/${compositionId}`, {
-    headers: { 'X-User-Id': MVP_USER_ID },
+    headers: { ...getAuthHeaders() },
   });
   return handleResponse<CompositionResponse>(response);
 }
@@ -76,7 +72,7 @@ export async function updateText(
     method: 'PUT',
     headers: { 
       'Content-Type': 'application/json',
-      'X-User-Id': MVP_USER_ID
+      ...getAuthHeaders()
     },
     body: JSON.stringify(request),
   });

@@ -35,16 +35,18 @@ async function addTsNoCheck(dir) {
   }
 }
 
-// Process both generated directories
+// Process generated directories
 const projectRoot = join(__dirname, '..');
 const compositionDir = join(projectRoot, 'src/api/generated/composition/src');
 const generationDir = join(projectRoot, 'src/api/generated/generation/src');
+const identityDir = join(projectRoot, 'src/api/generated/identity/src');
 
 console.log('Post-processing generated OpenAPI files...\n');
 
 Promise.all([
   addTsNoCheck(compositionDir),
   addTsNoCheck(generationDir),
+  addTsNoCheck(identityDir),
 ])
   .then(() => {
     console.log('\n✅ All generated files processed successfully');

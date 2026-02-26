@@ -17,6 +17,7 @@ import {
   type ErrorResponse,
 } from './generated/generation/src';
 import { API_BASE_URL } from '../config';
+import { getAuthHeaders } from './authHeader';
 
 /**
  * API Error wrapper for consistency with existing client
@@ -36,16 +37,9 @@ export class GenerationApiError extends Error {
  */
 const generationApiConfig = new Configuration({
   basePath: `${API_BASE_URL}/api/v1`,
-  // JWT token will be added here when authentication is implemented (blocked by US1)
-  // accessToken: () => getAuthToken(),
 });
 
 const generationApi = new GenerationApi(generationApiConfig);
-
-/**
- * MVP User ID (hardcoded until US1 authentication is implemented)
- */
-const MVP_USER_ID = '550e8400-e29b-41d4-a716-446655440000';
 
 /**
  * Generate meditation content with narration and subtitles
@@ -82,10 +76,10 @@ export async function generateMeditationContent(
   compositionId?: string
 ): Promise<GenerationResponse> {
   try {
-    // Build headers with required X-User-ID and X-Composition-ID
+    // Build headers with Authorization Bearer and optional X-Composition-ID
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      'X-User-ID': MVP_USER_ID,
+      ...getAuthHeaders(),
     };
     
     if (compositionId) {

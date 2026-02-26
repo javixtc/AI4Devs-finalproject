@@ -2,6 +2,7 @@
  * Upload file to S3 via backend API
  */
 import { API_BASE_URL } from '../config';
+import { getAuthHeaders } from './authHeader';
 
 export interface UploadFileResponse {
   fileUrl: string;
@@ -18,6 +19,7 @@ export async function uploadImage(file: File): Promise<UploadFileResponse> {
 
   const response = await fetch(`${API_BASE_URL}/api/v1/generation/upload/image`, {
     method: 'POST',
+    headers: { ...getAuthHeaders() },
     body: formData,
   });
 
@@ -37,6 +39,7 @@ export async function uploadMusic(file: File): Promise<UploadFileResponse> {
 
   const response = await fetch(`${API_BASE_URL}/api/v1/generation/upload/music`, {
     method: 'POST',
+    headers: { ...getAuthHeaders() },
     body: formData,
   });
 

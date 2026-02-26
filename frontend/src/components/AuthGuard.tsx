@@ -14,6 +14,7 @@
 
 import { Navigate, Outlet, NavLink } from 'react-router-dom';
 import { useAuthStore } from '@state/authStore';
+import { AppHeader } from './AppHeader';
 
 export function AuthGuard() {
   const session = useAuthStore((state) => state.session);
@@ -24,6 +25,9 @@ export function AuthGuard() {
 
   return (
     <div className="app">
+      {/* App header — name, photo, logout (C4) */}
+      <AppHeader />
+
       {/* Navigation — only shown when authenticated */}
       <nav className="app-nav">
         <ul>

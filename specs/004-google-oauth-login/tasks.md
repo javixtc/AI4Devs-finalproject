@@ -61,7 +61,7 @@
 
 - [x] T009 [US1] Frontend auth state + login — Implementar `authStore` (Zustand, en `frontend/src/state/`) con token, nombre y foto del usuario + página `LoginPage` (`frontend/src/pages/`) con botón `@react-oauth/google` que invoca C1/C5 → Actualizar `App.tsx` con rutas protegidas vía `AuthGuard` (`frontend/src/components/`) que redirige a `/login` si no hay sesión activa (C3). **Criterio**: rendering de LoginPage sin sesión; redirect a `/login` al acceder a `/library` sin token.
 
-- [ ] T010 [P] [US1] Frontend cliente API + cabecera — Generar cliente OpenAPI de `identity` (`npm run generate:api` → `frontend/src/api/generated/identity/`) + wrapper `identity-client.ts` para C1 y C4 + Actualizar todos los clientes API existentes para enviar `Authorization: Bearer <token>` en lugar de `X-User-Id` + cabecera de la aplicación con nombre, foto y enlace "Cerrar sesión" (C4) cuando hay sesión activa. **Criterio**: `npm run generate:api` sin errores; header `X-User-Id` eliminado de todos los clientes frontend; cabecera renderiza datos del perfil.
+- [x] T010 [P] [US1] Frontend cliente API + cabecera — Generar cliente OpenAPI de `identity` (`npm run generate:api` → `frontend/src/api/generated/identity/`) + wrapper `identity-client.ts` para C1 y C4 + Actualizar todos los clientes API existentes para enviar `Authorization: Bearer <token>` en lugar de `X-User-Id` + cabecera de la aplicación con nombre, foto y enlace "Cerrar sesión" (C4) cuando hay sesión activa. **Criterio**: `npm run generate:api` sin errores; header `X-User-Id` eliminado de todos los clientes frontend; cabecera renderiza datos del perfil.
 
 ---
 
