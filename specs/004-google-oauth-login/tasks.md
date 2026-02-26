@@ -81,7 +81,7 @@
 
 ## Phase 10 — CI/CD
 
-- [ ] T014 [US1] CI/CD — Actualizar `.github/workflows/backend-ci.yml`: añadir `GOOGLE_CLIENT_ID` como env var, incluir BDD tag `@identity` en gate 1 y lint de `US1.yaml` en gate 2. Actualizar `.github/workflows/frontend-ci.yml`: añadir `VITE_GOOGLE_CLIENT_ID` como env var/secret, verificar que gate 2 (`npm run generate:api`) incluye el cliente `identity`, añadir los tests E2E del flujo de login al gate 5. Eliminar `VITE_USER_ID` de ambos workflows. **Criterio**: todos los gates de ambos CI en verde; ningún valor hardcodeado de userId en workflows.
+- [X] T014 [US1] CI/CD — Actualizar `.github/workflows/backend-ci.yml`: añadir `GOOGLE_CLIENT_ID` como env var, incluir BDD tag `@identity` en gate 1 y lint de `US1.yaml` en gate 2. Actualizar `.github/workflows/frontend-ci.yml`: añadir `VITE_GOOGLE_CLIENT_ID` como env var/secret, verificar que gate 2 (`npm run generate:api`) incluye el cliente `identity`, añadir los tests E2E del flujo de login al gate 5. Eliminar `VITE_USER_ID` de ambos workflows. **Criterio**: todos los gates de ambos CI en verde; ningún valor hardcodeado de userId en workflows.
 
 ---
 

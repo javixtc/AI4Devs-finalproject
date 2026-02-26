@@ -7,7 +7,7 @@ name: Backend CI
 
 on:
   push:
-    branches: [ main, 'feature/*', '002-generate-meditation-audio-video', '003-list-play-meditations' ]
+    branches: [ main, 'feature/*', '002-generate-meditation-audio-video', '003-list-play-meditations', '004-google-oauth-login' ]
     paths:
       - 'backend/**'
       - '.github/workflows/backend-ci.yml'
@@ -23,6 +23,8 @@ env:
   # === Backend Secrets ===
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
   GOOGLE_CREDENTIALS_JSON: ${{ secrets.GOOGLE_TTS_JSON }}
+  # Identity BC — Google OAuth app registration (used in production env var; tests use mocks)
+  GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
 
 jobs:
   # Gate 1: BDD Tests (Cucumber)
@@ -77,11 +79,12 @@ jobs:
           node-version: '20'
 
       - name: Validate OpenAPI Specs
-        # Validates both BCs
+        # Validates all BC OpenAPI specs including the new Identity BC (US1)
         run: |
           npx @redocly/cli lint src/main/resources/openapi/meditationbuilder/compose-content.yaml || echo "Warning: US2 spec lint failed but continuing"
           npx @redocly/cli lint src/main/resources/openapi/generation/generate-meditation.yaml
           npx @redocly/cli lint src/main/resources/openapi/playback/list-play-meditations.yaml
+          npx @redocly/cli lint src/main/resources/openapi/identity/US1.yaml
 
   # Gate 3: Unit Domain
   unit-domain:
@@ -104,8 +107,8 @@ jobs:
           cache: 'maven'
       
       - name: Run Unit Tests (Domain)
-        # Filters for both domain packages
-        run: mvn test -Dtest="com.hexagonal.meditationbuilder.domain.**,com.hexagonal.meditation.generation.domain.**,com.hexagonal.playback.domain.**" -DfailIfNoTests=false
+        # Filters for all domain packages including the new Identity BC
+        run: mvn test -Dtest="com.hexagonal.meditationbuilder.domain.**,com.hexagonal.meditation.generation.domain.**,com.hexagonal.playback.domain.**,com.hexagonal.identity.domain.**" -DfailIfNoTests=false
 
   # Gate 4: Unit Application
   unit-application:
@@ -128,8 +131,8 @@ jobs:
           cache: 'maven'
       
       - name: Run Unit Tests (Application)
-        # Filters for both application packages
-        run: mvn test -Dtest="com.hexagonal.meditationbuilder.application.**,com.hexagonal.meditation.generation.application.**,com.hexagonal.playback.application.**" -DfailIfNoTests=false
+        # Filters for all application packages including the new Identity BC
+        run: mvn test -Dtest="com.hexagonal.meditationbuilder.application.**,com.hexagonal.meditation.generation.application.**,com.hexagonal.playback.application.**,com.hexagonal.identity.application.**" -DfailIfNoTests=false
 
   # Gate 5: Infrastructure Tests (Integration)
   infrastructure-it:
@@ -155,8 +158,8 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
       
       - name: Run Infrastructure Integration Tests
-        # Filters for infrastructure adapters
-        run: mvn test -Dtest="com.hexagonal.meditationbuilder.infrastructure.out.**,com.hexagonal.meditation.generation.infrastructure.out.**,com.hexagonal.playback.infrastructure.out.**" -DfailIfNoTests=false
+        # Filters for infrastructure adapters including the new Identity BC
+        run: mvn test -Dtest="com.hexagonal.meditationbuilder.infrastructure.out.**,com.hexagonal.meditation.generation.infrastructure.out.**,com.hexagonal.playback.infrastructure.out.**,com.hexagonal.identity.infrastructure.out.**" -DfailIfNoTests=false
 
   # Gate 6: Contract Tests
   contract-tests:

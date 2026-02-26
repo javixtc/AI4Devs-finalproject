@@ -2,7 +2,7 @@ name: Frontend CI
 
 on:
   push:
-    branches: [ main, 'feature/*', '**-compose-meditation-content', '**-list-play-meditations' ]
+    branches: [ main, 'feature/*', '**-compose-meditation-content', '**-list-play-meditations', '004-google-oauth-login' ]
     paths:
       - 'frontend/**'
       - '.github/workflows/frontend-ci.yml'
@@ -45,6 +45,9 @@ jobs:
 
       - name: Run unit tests with coverage
         run: npm run test:coverage
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: http://localhost:8080
       
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -90,6 +93,7 @@ jobs:
         run: npm run test -- --run --reporter=verbose
         env:
           VITE_API_BASE_URL: http://localhost:8080
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
 
   # Gate 3: E2E Tests
   e2e-tests:
@@ -137,6 +141,7 @@ jobs:
         run: npm run test:e2e -- --project=chromium --reporter=list,html
         env:
           BASE_URL: http://localhost:3011
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
       
       - name: Upload Playwright report
         uses: actions/upload-artifact@v4
@@ -188,6 +193,9 @@ jobs:
 
       - name: Build frontend
         run: npm run build
+        env:
+          VITE_GOOGLE_CLIENT_ID: ${{ secrets.VITE_GOOGLE_CLIENT_ID }}
+          VITE_API_BASE_URL: http://localhost:8080
       
       - name: Check build output
         run: |
