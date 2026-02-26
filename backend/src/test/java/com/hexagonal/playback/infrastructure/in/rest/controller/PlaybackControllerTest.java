@@ -20,9 +20,9 @@ import org.springframework.context.annotation.ComponentScan.Filter;
 import org.springframework.context.annotation.FilterType;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
-
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -31,6 +31,7 @@ import java.util.UUID;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -102,7 +103,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations")
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.meditations", hasSize(2)))
@@ -133,7 +134,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations")
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.meditations", hasSize(0)));
@@ -155,7 +156,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations")
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.meditations", hasSize(4)))
@@ -192,7 +193,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations/{id}", MEDITATION_ID_1)
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").value(MEDITATION_ID_1.toString()))
@@ -215,7 +216,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations/{id}", nonExistentId)
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isNotFound())
             .andExpect(jsonPath("$.message").value("Meditación no encontrada"))
@@ -231,7 +232,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations/{id}", MEDITATION_ID_1)
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.message").value("Esta meditación aún se está procesando. Por favor, espera a que esté lista."))
@@ -248,7 +249,7 @@ class PlaybackControllerTest {
 
         // When/Then
         mockMvc.perform(get("/v1/playback/meditations/{id}", MEDITATION_ID_1)
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isConflict())
             .andExpect(jsonPath("$.message").value("Error al generar la meditación. Por favor, inténtalo de nuevo."))
@@ -257,7 +258,7 @@ class PlaybackControllerTest {
     }
 
     @Test
-    @DisplayName("GET /playback/meditations/{id} - Should extract userId from header (not from request)")
+    @DisplayName("GET /playback/meditations/{id} - Should extract userId from security context (not from header)")
     void shouldExtractUserIdFromHeader() throws Exception {
         // Given
         Meditation meditation = createMeditation(
@@ -271,9 +272,9 @@ class PlaybackControllerTest {
         when(getPlaybackInfoUseCase.execute(any(UUID.class), any(UUID.class)))
             .thenReturn(meditation);
 
-        // When/Then - UserId from X-User-Id header, not from path
+        // When/Then - UserId from security context, not from header
         mockMvc.perform(get("/v1/playback/meditations/{id}", MEDITATION_ID_1)
-                .header("X-User-Id", USER_ID.toString())
+                .with(authentication(new UsernamePasswordAuthenticationToken(USER_ID.toString(), null, List.of())))
                 .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk());
     }

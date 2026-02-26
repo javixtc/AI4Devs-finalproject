@@ -100,7 +100,7 @@ public class GenerateMeditationE2ETest {
 
         given()
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", userId.toString())
+                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()
@@ -129,7 +129,7 @@ public class GenerateMeditationE2ETest {
 
         given()
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", userId.toString())
+                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()
@@ -156,7 +156,7 @@ public class GenerateMeditationE2ETest {
 
         String firstMeditationId = given()
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", userId.toString())
+                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()
@@ -167,7 +167,7 @@ public class GenerateMeditationE2ETest {
 
         given()
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", userId.toString())
+                .header("X-Test-User-Id", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .body(request)
         .when()

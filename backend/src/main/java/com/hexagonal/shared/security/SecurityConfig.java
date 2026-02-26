@@ -48,7 +48,11 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/v1/identity/auth/google").permitAll()
                 // C4: logout requires a valid session token
                 .requestMatchers(HttpMethod.POST, "/v1/identity/auth/logout").authenticated()
-                // Existing BCs remain open until T008 migrates their controllers
+                // Existing BCs: require authentication now that controllers read userId from SecurityContext (T008)
+                .requestMatchers("/v1/playback/**").authenticated()
+                .requestMatchers("/v1/generation/**").authenticated()
+                .requestMatchers("/v1/compositions/**").authenticated()
+                // All other paths (Actuator, etc.) remain open
                 .anyRequest().permitAll()
             )
             .addFilterBefore(sessionJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

@@ -22,12 +22,23 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.context.ActiveProfiles;
 
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import java.io.IOException;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import static io.restassured.RestAssured.given;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 /**
@@ -47,7 +58,10 @@ public class PlaybackContractTest {
             org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration.class,
             org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration.class,
             org.springframework.boot.autoconfigure.flyway.FlywayAutoConfiguration.class,
-            org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class
+            org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration.class,
+            org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class,
+            org.springframework.boot.autoconfigure.security.servlet.UserDetailsServiceAutoConfiguration.class,
+            org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration.class
     })
     @ComponentScan(basePackageClasses = {
             com.hexagonal.playback.infrastructure.in.rest.controller.PlaybackController.class,
@@ -58,6 +72,26 @@ public class PlaybackContractTest {
         @Bean
         public Clock clock() {
             return Clock.systemUTC();
+        }
+
+        @Bean
+        public FilterRegistrationBean<Filter> testAuthFilter() {
+            FilterRegistrationBean<Filter> registration = new FilterRegistrationBean<>(new Filter() {
+                @Override
+                public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+                        throws IOException, ServletException {
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            "550e8400-e29b-41d4-a716-446655440000", null, List.of());
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                    try {
+                        chain.doFilter(req, res);
+                    } finally {
+                        SecurityContextHolder.clearContext();
+                    }
+                }
+            });
+            registration.setOrder(-101);
+            return registration;
         }
     }
 
@@ -94,12 +128,11 @@ public class PlaybackContractTest {
                 new MediaUrls("https://s3.aws.com/audio.mp3", "https://s3.aws.com/video.mp4", null)
         );
 
-        when(listMeditationsUseCase.execute(USER_ID)).thenReturn(List.of(meditation));
+        when(listMeditationsUseCase.execute(any(UUID.class))).thenReturn(List.of(meditation));
 
         given()
                 .filter(validationFilter)
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", USER_ID.toString())
         .when()
                 .get("/v1/playback/meditations")
         .then()
@@ -118,12 +151,11 @@ public class PlaybackContractTest {
                 new MediaUrls("https://s3.aws.com/audio.mp3", null, "https://s3.aws.com/subs.srt")
         );
 
-        when(getPlaybackInfoUseCase.execute(MEDITATION_ID, USER_ID)).thenReturn(meditation);
+        when(getPlaybackInfoUseCase.execute(eq(MEDITATION_ID), any(UUID.class))).thenReturn(meditation);
 
         given()
                 .filter(validationFilter)
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", USER_ID.toString())
         .when()
                 .get("/v1/playback/meditations/{id}", MEDITATION_ID)
         .then()
@@ -134,13 +166,12 @@ public class PlaybackContractTest {
     @DisplayName("GET /v1/playback/meditations/{id} should comply with OpenAPI spec (404 NOT FOUND)")
     void shouldComplyWith404OpenApiSpec() {
         UUID nonExistentId = UUID.randomUUID();
-        when(getPlaybackInfoUseCase.execute(nonExistentId, USER_ID))
+        when(getPlaybackInfoUseCase.execute(any(UUID.class), any(UUID.class)))
                 .thenThrow(new MeditationNotFoundException(nonExistentId, USER_ID));
 
         given()
                 .filter(validationFilter)
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", USER_ID.toString())
         .when()
                 .get("/v1/playback/meditations/{id}", nonExistentId)
         .then()
@@ -150,13 +181,12 @@ public class PlaybackContractTest {
     @Test
     @DisplayName("GET /v1/playback/meditations/{id} should comply with OpenAPI spec (409 CONFLICT)")
     void shouldComplyWith409OpenApiSpec() {
-        when(getPlaybackInfoUseCase.execute(MEDITATION_ID, USER_ID))
+        when(getPlaybackInfoUseCase.execute(eq(MEDITATION_ID), any(UUID.class)))
                 .thenThrow(new MeditationNotPlayableException(MEDITATION_ID, ProcessingState.PROCESSING));
 
         given()
                 .filter(validationFilter)
                 .contentType(ContentType.JSON)
-                .header("X-User-ID", USER_ID.toString())
         .when()
                 .get("/v1/playback/meditations/{id}", MEDITATION_ID)
         .then()

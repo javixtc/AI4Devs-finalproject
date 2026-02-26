@@ -33,7 +33,7 @@ public class PlaybackSteps {
     @Cuando("solicita ver el listado de sus meditaciones")
     public void solicitaVerElListadoDeSusMeditaciones() {
         lastResponse = given()
-                .header("X-User-Id", userId.toString())
+                .header("X-Test-User-Id", userId.toString())
         .when()
                 .get("/v1/playback/meditations"); // Base path is /api, so it calls /api/v1/playback/meditations
     }
@@ -79,7 +79,7 @@ public class PlaybackSteps {
     @Cuando("selecciona reproducir esa meditación")
     public void seleccionaReproducirEsaMeditacion() {
         lastResponse = given()
-                .header("X-User-Id", userId.toString())
+                .header("X-Test-User-Id", userId.toString())
         .when()
                 .get("/v1/playback/meditations/{id}", meditationId);
     }

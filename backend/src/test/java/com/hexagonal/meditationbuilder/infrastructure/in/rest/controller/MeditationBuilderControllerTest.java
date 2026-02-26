@@ -14,6 +14,7 @@ import com.hexagonal.meditationbuilder.infrastructure.in.rest.dto.*;
 import com.hexagonal.meditationbuilder.infrastructure.in.rest.mapper.CompositionDtoMapper;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.context.annotation.Import;
 import com.hexagonal.meditationbuilder.infrastructure.in.rest.controller.GlobalExceptionHandler;
@@ -44,6 +45,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
     controllers = MeditationBuilderController.class,
     properties = "media.preview.base-url=http://localhost:8081/api/media/preview"
 )
+@AutoConfigureMockMvc(addFilters = false)
 @Import({GlobalExceptionHandler.class, CompositionDtoMapper.class})
 @DisplayName("MeditationBuilderController Tests")
 class MeditationBuilderControllerTest {

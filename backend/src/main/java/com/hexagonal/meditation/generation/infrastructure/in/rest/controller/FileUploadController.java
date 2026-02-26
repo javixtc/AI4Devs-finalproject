@@ -4,6 +4,7 @@ import com.hexagonal.meditation.generation.domain.ports.out.MediaStoragePort;
 import com.hexagonal.meditation.generation.domain.ports.out.MediaStoragePort.MediaFileType;
 import com.hexagonal.meditation.generation.domain.ports.out.MediaStoragePort.UploadRequest;
 import com.hexagonal.meditation.generation.infrastructure.in.rest.dto.UploadFileResponse;
+import com.hexagonal.shared.security.SecurityContextHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -42,23 +43,17 @@ public class FileUploadController {
     
     /**
      * Upload an image file to S3/LocalStack.
-     * 
+     *
      * @param file the image file to upload
-     * @param userId user ID (from header, in production from JWT)
      * @return presigned URL of the uploaded image
      */
     @PostMapping(value = "/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadFileResponse> uploadImage(
-            @RequestParam("file") MultipartFile file,
-            @RequestHeader(value = "X-User-ID", required = false) UUID userId) {
-        
-        log.info("Uploading image file: {}, size: {} bytes, userId: {}", 
+            @RequestParam("file") MultipartFile file) {
+
+        UUID userId = SecurityContextHelper.getRequiredUserId();
+        log.info("Uploading image file: {}, size: {} bytes, userId: {}",
                 file.getOriginalFilename(), file.getSize(), userId);
-        
-        // Validate user ID
-        if (userId == null) {
-            userId = UUID.randomUUID(); // Fallback for MVP (no auth)
-        }
         
         // Validate file
         validateFile(file, "image");
@@ -97,24 +92,19 @@ public class FileUploadController {
     }
     
     /**
+    /**
      * Upload a music file to S3/LocalStack.
-     * 
+     *
      * @param file the music file to upload
-     * @param userId user ID (from header, in production from JWT)
      * @return presigned URL of the uploaded music
      */
     @PostMapping(value = "/music", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<UploadFileResponse> uploadMusic(
-            @RequestParam("file") MultipartFile file,
-            @RequestHeader(value = "X-User-ID", required = false) UUID userId) {
-        
-        log.info("Uploading music file: {}, size: {} bytes, userId: {}", 
+            @RequestParam("file") MultipartFile file) {
+
+        UUID userId = SecurityContextHelper.getRequiredUserId();
+        log.info("Uploading music file: {}, size: {} bytes, userId: {}",
                 file.getOriginalFilename(), file.getSize(), userId);
-        
-        // Validate user ID
-        if (userId == null) {
-            userId = UUID.randomUUID(); // Fallback for MVP (no auth)
-        }
         
         // Validate file
         validateFile(file, "audio");

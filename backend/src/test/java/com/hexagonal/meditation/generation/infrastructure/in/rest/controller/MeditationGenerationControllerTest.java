@@ -7,24 +7,38 @@ import com.hexagonal.meditation.generation.domain.exception.InvalidContentExcept
 import com.hexagonal.meditation.generation.domain.ports.in.GenerateMeditationContentUseCase;
 import com.hexagonal.meditation.generation.domain.ports.in.GenerateMeditationContentUseCase.GenerationRequest;
 import com.hexagonal.meditation.generation.domain.ports.in.GenerateMeditationContentUseCase.GenerationResponse;
+import com.hexagonal.meditation.generation.domain.ports.out.ContentRepositoryPort;
 import com.hexagonal.meditation.generation.infrastructure.in.rest.dto.GenerateMeditationRequest;
 import com.hexagonal.meditation.generation.infrastructure.in.rest.mapper.MeditationOutputDtoMapper;
 import com.hexagonal.meditation.generation.infrastructure.out.persistence.repository.JpaMeditationOutputRepository;
+import com.hexagonal.meditationbuilder.MeditationBuilderApplication;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
+import org.springframework.core.annotation.Order;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.Clock;
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -41,16 +55,31 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * - Error: Invalid content (400)
  * - Error: External service failure (503)
  * 
- * Authentication: Bypassed in test profile via mock headers
- * (X-User-ID, X-Composition-ID).
+ * Authentication: Bypassed via SecurityMockMvcRequestPostProcessors in each test.
  */
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.MOCK)
-@AutoConfigureMockMvc
-@TestPropertySource(properties = {
-    "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration"
-})
+@ContextConfiguration(classes = MeditationBuilderApplication.class)
+@WebMvcTest(controllers = MeditationGenerationController.class)
+@Import(MeditationOutputDtoMapper.class)
 @DisplayName("MeditationGenerationController Tests")
 class MeditationGenerationControllerTest {
+
+    /**
+     * Test-specific security config: disables CSRF and uses session-based context
+     * so that SecurityMockMvcRequestPostProcessors.authentication() works correctly
+     * with MockMvc POST requests (bypasses the STATELESS session policy in production).
+     */
+    @TestConfiguration
+    static class TestSecurityConfig {
+        @Bean("testGenerationSecurityFilterChain")
+        @Order(Integer.MIN_VALUE)
+        public SecurityFilterChain testFilterChain(HttpSecurity http) throws Exception {
+            http
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
+                .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+            return http.build();
+        }
+    }
 
     private static final Instant FIXED_NOW = Instant.parse("2026-01-01T00:00:00Z");
 
@@ -64,10 +93,16 @@ class MeditationGenerationControllerTest {
     private GenerateMeditationContentUseCase generateMeditationContentUseCase;
 
     @MockBean
+    private ContentRepositoryPort contentRepositoryPort;
+
+    @MockBean
     private JpaMeditationOutputRepository jpaMeditationOutputRepository;
 
-    // @Nested
-    @DisplayName("POST /api/v1/generation/meditations")
+    @MockBean
+    private Clock clock;
+
+    @Nested
+    @DisplayName("POST /v1/generation/meditations")
     class GenerateMeditationContent {
 
         @Test
@@ -101,8 +136,8 @@ class MeditationGenerationControllerTest {
                     .thenReturn(domainResponse);
 
             // When/Then
-            mockMvc.perform(post("/api/v1/generation/meditations")
-                            .header("X-User-ID", userId.toString())
+            mockMvc.perform(post("/v1/generation/meditations")
+                            .with(csrf()).with(authentication(new UsernamePasswordAuthenticationToken(userId.toString(), null, List.of())))
                             .header("X-Composition-ID", compositionId.toString())
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -147,8 +182,8 @@ class MeditationGenerationControllerTest {
                     .thenReturn(domainResponse);
 
             // When/Then
-            mockMvc.perform(post("/api/v1/generation/meditations")
-                            .header("X-User-ID", userId.toString())
+            mockMvc.perform(post("/v1/generation/meditations")
+                            .with(csrf()).with(authentication(new UsernamePasswordAuthenticationToken(userId.toString(), null, List.of())))
                             .header("X-Composition-ID", compositionId.toString())
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -178,8 +213,8 @@ class MeditationGenerationControllerTest {
                             "Processing time would exceed 187 seconds. Estimated: 200s"));
 
             // When/Then
-            mockMvc.perform(post("/api/v1/generation/meditations")
-                            .header("X-User-ID", userId.toString())
+            mockMvc.perform(post("/v1/generation/meditations")
+                            .with(csrf()).with(authentication(new UsernamePasswordAuthenticationToken(userId.toString(), null, List.of())))
                             .header("X-Composition-ID", compositionId.toString())
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -205,8 +240,8 @@ class MeditationGenerationControllerTest {
                     .thenThrow(new InvalidContentException("Music reference not found in media catalog"));
 
             // When/Then
-            mockMvc.perform(post("/api/v1/generation/meditations")
-                            .header("X-User-ID", userId.toString())
+            mockMvc.perform(post("/v1/generation/meditations")
+                            .with(csrf()).with(authentication(new UsernamePasswordAuthenticationToken(userId.toString(), null, List.of())))
                             .header("X-Composition-ID", compositionId.toString())
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -232,8 +267,8 @@ class MeditationGenerationControllerTest {
                     .thenThrow(new RuntimeException("TTS service unavailable"));
 
             // When/Then
-            mockMvc.perform(post("/api/v1/generation/meditations")
-                            .header("X-User-ID", userId.toString())
+            mockMvc.perform(post("/v1/generation/meditations")
+                            .with(csrf()).with(authentication(new UsernamePasswordAuthenticationToken(userId.toString(), null, List.of())))
                             .header("X-Composition-ID", compositionId.toString())
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
@@ -256,8 +291,8 @@ class MeditationGenerationControllerTest {
             );
 
             // When/Then
-            mockMvc.perform(post("/api/v1/generation/meditations")
-                            .header("X-User-ID", userId.toString())
+            mockMvc.perform(post("/v1/generation/meditations")
+                            .with(csrf()).with(authentication(new UsernamePasswordAuthenticationToken(userId.toString(), null, List.of())))
                             .header("X-Composition-ID", compositionId.toString())
                             .contentType(org.springframework.http.MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))

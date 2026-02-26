@@ -9,6 +9,7 @@ import com.hexagonal.meditation.generation.domain.ports.out.ContentRepositoryPor
 import com.hexagonal.meditation.generation.infrastructure.in.rest.dto.GenerateMeditationRequest;
 import com.hexagonal.meditation.generation.infrastructure.in.rest.dto.GenerationResponse;
 import com.hexagonal.meditation.generation.infrastructure.in.rest.mapper.MeditationOutputDtoMapper;
+import com.hexagonal.shared.security.SecurityContextHelper;
 import jakarta.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -63,34 +64,21 @@ public class MeditationGenerationController {
 
     /**
      * POST /api/v1/generation/meditations - Generate meditation content with narration.
-     * 
-     * Maps to BDD scenarios:
-     * - Scenario 1: "Generate narrated video with synchronized subtitles"
-     * - Scenario 2: "Generate narrated podcast"
-     * - Scenario 3: "Processing time exceeded"
-     * 
-     * @param request meditation generation request (text, music, optional image)
-     * @param compositionId composition ID header (in production from context)
-     * @param userId user ID header (in production from JWT, in tests from mock header)
-     * @return 200 OK with generation response (media URLs, status, duration)
-     *         408 Request Timeout if processing time exceeds 187s
-     *         400 Bad Request if validation fails
-     *         503 Service Unavailable if external service fails
+     *
+     * @param request       meditation generation request (text, music, optional image)
+     * @param compositionId composition ID header (optional; random UUID used as fallback)
+     * @return 200 OK with generation response
      */
     @PostMapping
     public ResponseEntity<GenerationResponse> generateMeditationContent(
             @Valid @RequestBody GenerateMeditationRequest request,
-            @RequestHeader(value = "X-Composition-ID", required = false) UUID compositionId,
-            @RequestHeader(value = "X-User-ID", required = false) UUID userId) {
-        
-        log.info("Generating meditation content for userId={}, compositionId={}, type={}", 
+            @RequestHeader(value = "X-Composition-ID", required = false) UUID compositionId) {
+
+        UUID userId = SecurityContextHelper.getRequiredUserId();
+
+        log.info("Generating meditation content for userId={}, compositionId={}, type={}",
                 userId, compositionId, request.imageReference() != null ? "VIDEO" : "AUDIO");
 
-        // TODO: In production, extract userId from JWT SecurityContext instead of header
-        // For now (US1 blocked), use header provided by TestSecurityConfig
-        if (userId == null) {
-            throw new IllegalArgumentException("User ID is required");
-        }
         if (compositionId == null) {
             compositionId = UUID.randomUUID(); // Fallback for MVP
         }
