@@ -4,7 +4,7 @@
 **Inputs**: ./plan.md · ./spec.md · ./data-model.md · ./research.md  
 **Bounded Context nuevo**: `identity`  
 **BCs migrados**: `meditationbuilder` · `meditation.generation` · `playback`  
-**Total tareas**: 14 (feature compleja, un BC nuevo + migración de 3 BCs)
+**Total tareas**: 15 (feature compleja, un BC nuevo + migración de 3 BCs)
 
 ---
 
@@ -54,6 +54,8 @@
 - [x] T007 [US1] Controllers  identity — Implementar `AuthController` en `${basePackage}/identity/infrastructure/in/rest/` (endpoint autenticación C1/C2 + logout C4). Solo traduce protocolo ↔ use cases. Completar step definitions BDD para que los 5 escenarios de T001 pasen a VERDE. **Criterio**: BDD tag `@identity` en verde; contrato cumple `US1.yaml`; sin lógica de negocio en el controller.
 
 - [x] T008 [P] [US1] Migración controllers existentes — En los controllers de `meditationbuilder`, `meditation.generation` y `playback`: sustituir lectura del header `X-User-Id` por extracción del `userId` desde el `SecurityContext` (inyectado por el filtro T006). Solo se toca la capa de controller; dominio y application no cambian. **Criterio**: tests de los 3 BCs existentes en verde; header `X-User-Id` eliminado de toda la capa de entrada.
+
+- [X] T008b [P] [US1] Migración BDD test infrastructure — Actualizar las 3 `*CucumberSpringConfiguration` (`PlaybackCucumberSpringConfiguration`, `CucumberSpringConfiguration`, `CompositionCucumberSpringConfiguration`) y sus step definitions para usar JWT Bearer en lugar de `X-User-Id`/`X-Test-User-Id`: añadir `@MockBean ValidarCredencialGooglePort` en cada config, obtener JWT real vía `POST /v1/identity/auth/google` en `@Before`, registrar el token como `RestAssured.requestSpecification`, eliminar headers obsoletos en `PlaybackSteps` y `GenerateMeditationSteps`. Añadir `@After RestAssured.reset()` en la config de Generation para evitar contaminación de estado estático entre suites. **Paths**: `backend/src/test/java/.../bdd/`. **Criterio**: Gate 1 CI (`mvn test -Dtest="**/*BDD*..."`) con 18 escenarios en verde; `X-Test-User-Id` y `X-User-ID` eliminados de todos los step definitions.
 
 ---
 
@@ -141,6 +143,7 @@ Las tareas T011–T014 (contracts, E2E, CI/CD) son necesarias para el gate de en
 | T006 | Tests unitarios del filtro con JWT válido/inválido/ausente |
 | T007 | `mvn test -Dcucumber.filter.tags=@identity` → 5/5 VERDE |
 | T008 | Tests de los 3 BCs existentes en verde sin header `X-User-Id` |
+| T008b | `mvn test -Dtest="**/*BDD*..."` → 18 escenarios BDD verde; no `X-Test-User-Id` ni `X-User-ID` en step defs |
 | T009 | `npm run test` → LoginPage y AuthGuard renderización; redirect sin token |
 | T010 | `npm run generate:api` OK; ningún cliente envía `X-User-Id` |
 | T011 | `mvn failsafe:integration-test -Dtest=**/contracts/**` → verde |

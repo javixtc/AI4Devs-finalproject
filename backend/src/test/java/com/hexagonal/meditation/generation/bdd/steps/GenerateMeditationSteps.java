@@ -85,7 +85,6 @@ public class GenerateMeditationSteps {
         }
 
         lastResponse = given()
-                .header("X-User-ID", userId.toString())
                 .header("X-Composition-ID", compositionId.toString())
                 .contentType(ContentType.JSON)
                 .body(body)

@@ -2,20 +2,29 @@ package com.hexagonal.meditationbuilder.bdd;
 
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
+import com.hexagonal.identity.domain.model.GoogleUserInfo;
+import com.hexagonal.identity.domain.ports.out.ValidarCredencialGooglePort;
 import com.hexagonal.meditationbuilder.MeditationBuilderApplication;
 import com.hexagonal.meditationbuilder.infrastructure.config.PersistenceConfig;
+import io.cucumber.java.Before;
+import io.cucumber.java.After;
 import io.cucumber.spring.CucumberContextConfiguration;
 import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import org.mockito.Mockito;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import io.cucumber.java.Before;
-import io.cucumber.java.After;
+
+import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static io.restassured.RestAssured.given;
 
 /**
  * Spring Boot test context configuration for Cucumber BDD tests.
@@ -40,6 +49,10 @@ public class CompositionCucumberSpringConfiguration {
 
     @LocalServerPort
     private int port;
+
+    /** Mocked so BDD scenarios can authenticate without a real Google JWKS endpoint. */
+    @MockBean
+    public ValidarCredencialGooglePort validarCredencialPort;
 
     private static WireMockServer aiTextServer;
     private static WireMockServer aiImageServer;
@@ -71,7 +84,28 @@ public class CompositionCucumberSpringConfiguration {
         RestAssured.port = port;
         RestAssured.basePath = "/api";  // Context path from application.yml
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-        
+
+        // Authenticate with a mocked Google credential to obtain a real session JWT.
+        Mockito.when(validarCredencialPort.validar("bdd-compose-token"))
+               .thenReturn(new GoogleUserInfo(
+                       "compose-bdd-sub-001",
+                       "compose@bdd.test",
+                       "Compose BDD",
+                       null));
+
+        String jwt = given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("idToken", "bdd-compose-token"))
+                .post("/v1/identity/auth/google")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("sessionToken");
+
+        RestAssured.requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", "Bearer " + jwt)
+                .build();
+
         // Reset WireMock stubs before each scenario
         aiTextServer.resetAll();
         aiImageServer.resetAll();

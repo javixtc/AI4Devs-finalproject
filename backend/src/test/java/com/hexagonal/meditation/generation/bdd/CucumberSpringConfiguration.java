@@ -1,9 +1,19 @@
 package com.hexagonal.meditation.generation.bdd;
 
+import com.hexagonal.identity.domain.model.GoogleUserInfo;
+import com.hexagonal.identity.domain.ports.out.ValidarCredencialGooglePort;
 import com.hexagonal.meditationbuilder.MeditationBuilderApplication;
+import io.cucumber.java.After;
+import io.cucumber.java.Before;
 import io.cucumber.spring.CucumberContextConfiguration;
+import io.restassured.RestAssured;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.http.ContentType;
+import org.mockito.Mockito;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -12,10 +22,11 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.utility.DockerImageName;
-import io.restassured.RestAssured;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import jakarta.annotation.PostConstruct;
 
+import java.util.Map;
+
+import static io.restassured.RestAssured.given;
 import static org.testcontainers.containers.localstack.LocalStackContainer.Service.S3;
 
 /**
@@ -28,6 +39,9 @@ import static org.testcontainers.containers.localstack.LocalStackContainer.Servi
 @Testcontainers
 public class CucumberSpringConfiguration {
 
+    /** Mocked so BDD scenarios can authenticate without a real Google JWKS endpoint. */
+    @MockBean
+    public ValidarCredencialGooglePort validarCredencialPort;
     @Container
     static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
             .withDatabaseName("meditation_builder_test")
@@ -72,5 +86,38 @@ public class CucumberSpringConfiguration {
         
         // Create bucket in LocalStack
         localstack.execInContainer("awslocal", "s3", "mb", "s3://meditation-outputs");
+    }
+
+    /**
+     * Authenticate before each scenario: mock the Google credential port, call the
+     * identity auth endpoint, and set the resulting JWT as the default Authorization header.
+     */
+    @Before
+    public void authenticateForBDD() {
+        Mockito.when(validarCredencialPort.validar("bdd-gen-token"))
+               .thenReturn(new GoogleUserInfo(
+                       "gen-bdd-sub-001",
+                       "gen@bdd.test",
+                       "Gen BDD",
+                       null));
+
+        String jwt = given()
+                .contentType(ContentType.JSON)
+                .body(Map.of("idToken", "bdd-gen-token"))
+                .post("/v1/identity/auth/google")
+                .then()
+                .statusCode(200)
+                .extract()
+                .path("sessionToken");
+
+        RestAssured.requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", "Bearer " + jwt)
+                .build();
+    }
+
+    /** Reset RestAssured static state so subsequent BDD test classes start clean. */
+    @After
+    public void tearDownRestAssured() {
+        RestAssured.reset();
     }
 }

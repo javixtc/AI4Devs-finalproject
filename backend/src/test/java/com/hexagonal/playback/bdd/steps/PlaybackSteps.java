@@ -1,5 +1,6 @@
 package com.hexagonal.playback.bdd.steps;
 
+import com.hexagonal.playback.bdd.PlaybackCucumberSpringConfiguration;
 import com.hexagonal.playback.domain.model.ProcessingState;
 import io.cucumber.java.es.Dado;
 import io.cucumber.java.es.Cuando;
@@ -18,22 +19,24 @@ public class PlaybackSteps {
     private static final Instant FIXED_NOW = Instant.parse("2026-01-01T00:00:00Z");
 
     @Autowired
+    private PlaybackCucumberSpringConfiguration config;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     private Response lastResponse;
-    private final UUID userId = UUID.randomUUID();
+    private UUID userId;  // Set from JWT auth response in setUp()
     private UUID meditationId;
 
     @Dado("el usuario está autenticado")
     public void elUsuarioEstaAutenticado() {
-        // En un futuro se autenticará vía JWT
-        // Se limpia la DB o se usa un userId aleatorio para evitar colisiones entre tests
+        // userId comes from the JWT issued by the identity BC in setUp()
+        userId = config.bddUserId;
     }
 
     @Cuando("solicita ver el listado de sus meditaciones")
     public void solicitaVerElListadoDeSusMeditaciones() {
         lastResponse = given()
-                .header("X-Test-User-Id", userId.toString())
         .when()
                 .get("/v1/playback/meditations"); // Base path is /api, so it calls /api/v1/playback/meditations
     }
@@ -79,7 +82,6 @@ public class PlaybackSteps {
     @Cuando("selecciona reproducir esa meditación")
     public void seleccionaReproducirEsaMeditacion() {
         lastResponse = given()
-                .header("X-Test-User-Id", userId.toString())
         .when()
                 .get("/v1/playback/meditations/{id}", meditationId);
     }
