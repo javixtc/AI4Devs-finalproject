@@ -51,7 +51,7 @@
 
 ## Phase 6 — Controllers
 
-- [ ] T007 [US1] Controllers  identity — Implementar `AuthController` en `${basePackage}/identity/infrastructure/in/rest/` (endpoint autenticación C1/C2 + logout C4). Solo traduce protocolo ↔ use cases. Completar step definitions BDD para que los 5 escenarios de T001 pasen a VERDE. **Criterio**: BDD tag `@identity` en verde; contrato cumple `US1.yaml`; sin lógica de negocio en el controller.
+- [x] T007 [US1] Controllers  identity — Implementar `AuthController` en `${basePackage}/identity/infrastructure/in/rest/` (endpoint autenticación C1/C2 + logout C4). Solo traduce protocolo ↔ use cases. Completar step definitions BDD para que los 5 escenarios de T001 pasen a VERDE. **Criterio**: BDD tag `@identity` en verde; contrato cumple `US1.yaml`; sin lógica de negocio en el controller.
 
 - [ ] T008 [P] [US1] Migración controllers existentes — En los controllers de `meditationbuilder`, `meditation.generation` y `playback`: sustituir lectura del header `X-User-Id` por extracción del `userId` desde el `SecurityContext` (inyectado por el filtro T006). Solo se toca la capa de controller; dominio y application no cambian. **Criterio**: tests de los 3 BCs existentes en verde; header `X-User-Id` eliminado de toda la capa de entrada.
 

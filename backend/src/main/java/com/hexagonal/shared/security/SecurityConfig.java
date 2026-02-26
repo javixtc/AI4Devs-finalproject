@@ -3,11 +3,13 @@ package com.hexagonal.shared.security;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 /**
@@ -37,10 +39,17 @@ public class SecurityConfig {
         http
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Return 401 (not 403) when an unauthenticated request reaches a protected endpoint (C3)
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED))
+            )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers(HttpMethod.POST, "/api/identity/auth/google").permitAll()
-                .requestMatchers("/api/identity/auth/logout").authenticated()   // C4: logout requires token
-                .anyRequest().permitAll()  // existing BCs can still be called; T008 will enforce auth
+                // C1/C2: login endpoint is public — no token required
+                .requestMatchers(HttpMethod.POST, "/v1/identity/auth/google").permitAll()
+                // C4: logout requires a valid session token
+                .requestMatchers(HttpMethod.POST, "/v1/identity/auth/logout").authenticated()
+                // Existing BCs remain open until T008 migrates their controllers
+                .anyRequest().permitAll()
             )
             .addFilterBefore(sessionJwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
