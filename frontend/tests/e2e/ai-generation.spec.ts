@@ -123,10 +123,27 @@ const mockAIRoutes = async (page: Page) => {
   });
 };
 
+/** Injects a fake authenticated session into localStorage. */
+async function injectSession(page: Page) {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'auth-session',
+      JSON.stringify({
+        state: { session: { token: 'fake-e2e-jwt-token-abc123', nombre: 'E2E Test User', foto: null } },
+        version: 0,
+      })
+    );
+  });
+}
+
 test.describe('AI Generation Flow', () => {
   test.beforeEach(async ({ page }) => {
     // Set up AI API mocks
     await mockAIRoutes(page);
+
+    // Inject auth session (navigate to /login first to establish localStorage context)
+    await page.goto('/login');
+    await injectSession(page);
 
     // Navigate to the meditation builder
     await page.goto('/');

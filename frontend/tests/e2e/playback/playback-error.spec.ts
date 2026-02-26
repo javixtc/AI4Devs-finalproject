@@ -1,4 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+/** Injects a fake authenticated session into localStorage. */
+async function injectSession(page: Page) {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'auth-session',
+      JSON.stringify({
+        state: { session: { token: 'fake-e2e-jwt-token-abc123', nombre: 'E2E Test User', foto: null } },
+        version: 0,
+      })
+    );
+  });
+}
 
 /**
  * E2E Tests: Meditation Library Error Handling
@@ -29,6 +42,10 @@ test.describe('Meditation Library - Error Handling', () => {
         })
       });
     });
+
+    // Inject auth session (navigate to /login first to establish localStorage context)
+    await page.goto('/login');
+    await injectSession(page);
 
     await page.goto('/library');
     await page.waitForSelector('.meditation-list');

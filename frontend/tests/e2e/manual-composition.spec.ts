@@ -1,4 +1,46 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
+
+/** Injects a fake authenticated session into localStorage. */
+async function injectSession(page: Page) {
+  await page.evaluate(() => {
+    localStorage.setItem(
+      'auth-session',
+      JSON.stringify({
+        state: { session: { token: 'fake-e2e-jwt-token-abc123', nombre: 'E2E Test User', foto: null } },
+        version: 0,
+      })
+    );
+  });
+}
+
+/** Mocks the compositions API (required when MeditationBuilderPage initialises). */
+async function mockCompositionsApi(page: Page) {
+  await page.route('**/api/v1/compositions', async (route) => {
+    if (route.request().method() === 'POST') {
+      await route.fulfill({
+        status: 201,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'test-composition-id', text: '', musicReference: null, imageReference: null, outputType: 'PODCAST' }),
+      });
+    }
+  });
+  await page.route('**/api/v1/compositions/*', async (route) => {
+    const method = route.request().method();
+    if (method === 'GET') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'test-composition-id', text: '', musicReference: null, imageReference: null, outputType: 'PODCAST' }),
+      });
+    } else if (method === 'PUT') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ id: 'test-composition-id', text: '', musicReference: null, imageReference: null, outputType: 'PODCAST' }),
+      });
+    }
+  });
+}
 
 /**
  * E2E Tests: Manual Composition Flow
@@ -17,9 +59,16 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Manual Composition Flow', () => {
   test.beforeEach(async ({ page }) => {
+    // Mock compositions API (required for MeditationBuilderPage to load)
+    await mockCompositionsApi(page);
+
+    // Inject auth session (navigate to /login first to establish localStorage context)
+    await page.goto('/login');
+    await injectSession(page);
+
     // Navigate to the meditation builder page
     await page.goto('/');
-    
+
     // Wait for the page to be fully loaded
     await page.waitForSelector('[data-testid="meditation-builder"]', { timeout: 10000 });
   });
