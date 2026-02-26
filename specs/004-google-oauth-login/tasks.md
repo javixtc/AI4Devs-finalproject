@@ -43,9 +43,9 @@
 
 ## Phase 5 — Infrastructure
 
-- [ ] T005 [US1] Infra — Adapters out del BC `identity`: persistencia de PerfilDeUsuario en tabla `identity.users` (PostgreSQL), validación del `id_token` de Google via JWKS (Spring Security OAuth2 Resource Server), emisión del JWT de sesión propio (clave configurable por env). Tests de integración del adaptador de persistencia con Testcontainers. Adaptador Google probado con servicio simulado. **Paths**: `${basePackage}/identity/infrastructure/out/`. **Criterio**: tests de integración en verde; ninguna lógica de negocio en adaptadores.
+- [x] T005 [US1] Infra — Adapters out del BC `identity`: persistencia de PerfilDeUsuario en tabla `identity.users` (PostgreSQL), validación del `id_token` de Google via JWKS (Spring Security OAuth2 Resource Server), emisión del JWT de sesión propio (clave configurable por env). Tests de integración del adaptador de persistencia con Testcontainers. Adaptador Google probado con servicio simulado. **Paths**: `${basePackage}/identity/infrastructure/out/`. **Criterio**: tests de integración en verde; ninguna lógica de negocio en adaptadores.
 
-- [ ] T006 [P] [US1] Infra shared/security — Implementar filtro de seguridad transversal en `${basePackage}/shared/security/` que extrae el `userId` del JWT de sesión propio y lo inyecta en el `SecurityContext` de cada petición autenticada. Reemplaza el mecanismo `X-User-Id` en los controllers de los 3 BCs existentes (ver T008). **Criterio**: filtro probado con token válido, inválido y ausente; no modifica dominio ni application de los BCs existentes.
+- [x] T006 [P] [US1] Infra shared/security — Implementar filtro de seguridad transversal en `${basePackage}/shared/security/` que extrae el `userId` del JWT de sesión propio y lo inyecta en el `SecurityContext` de cada petición autenticada. Reemplaza el mecanismo `X-User-Id` en los controllers de los 3 BCs existentes (ver T008). **Criterio**: filtro probado con token válido, inválido y ausente; no modifica dominio ni application de los BCs existentes.
 
 ---
 

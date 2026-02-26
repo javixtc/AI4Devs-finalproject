@@ -21,7 +21,7 @@ ai:
 # OpenAI Configuration
 openai:
   base-url: ${OPENAI_BASE_URL:https://api.openai.com}
-  api-key: ${OPENAI_API_KEY}
+  api-key: ${OPENAI_API_KEY:}
 
   text:
     model: ${OPENAI_TEXT_MODEL:gpt-5-nano}
@@ -113,3 +113,13 @@ logging:
     com.hexagonal.meditation.generation.infrastructure.out.adapter.ffmpeg: DEBUG
     # Never log AI prompts or responses (security)
     com.hexagonal.meditationbuilder.infrastructure.out.service: WARN
+
+# Identity BC Configuration
+identity:
+  jwt:
+    # HS256 signing secret — set IDENTITY_JWT_SECRET env var in production (min 32 chars)
+    secret: ${IDENTITY_JWT_SECRET:change-me-in-production-minimum-32-chars!!}
+  google:
+    # Google public JWKS endpoint for id_token verification
+    jwks-uri: ${IDENTITY_GOOGLE_JWKS_URI:https://www.googleapis.com/oauth2/v3/certs}
+

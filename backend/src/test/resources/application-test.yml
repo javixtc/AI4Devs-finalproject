@@ -9,7 +9,7 @@ spring:
 
   # H2 in-memory database for integration tests
   datasource:
-    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS GENERATION
+    url: jdbc:h2:mem:testdb;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;INIT=CREATE SCHEMA IF NOT EXISTS GENERATION\;CREATE SCHEMA IF NOT EXISTS IDENTITY
     driver-class-name: org.h2.Driver
     username: sa
     password:
@@ -67,3 +67,14 @@ logging:
   level:
     root: WARN
     com.hexagonal.meditationbuilder: INFO
+    com.hexagonal.identity: INFO
+    com.hexagonal.shared.security: INFO
+
+# Identity BC — test configuration
+identity:
+  jwt:
+    # Test secret: exactly 44 chars (>= 32 required for HS256)
+    secret: test-identity-jwt-secret-for-ci-tests-only!!
+  google:
+    # WireMock / mock URI — integration tests override with @DynamicPropertySource
+    jwks-uri: http://localhost:9999/o/oauth2/v3/certs
