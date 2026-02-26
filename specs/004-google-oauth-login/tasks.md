@@ -25,7 +25,7 @@
 
 ## Phase 2 — API First
 
-- [ ] T002 [US1] OpenAPI — Definir `openapi/identity/US1.yaml` con las 4 capacidades del backend (C1: autenticar con Google, C2: reconocer usuario existente, C3: proteger rutas no autenticadas → 401, C4: cerrar sesión). Sin desvíos respecto a los When del BDD. **Criterio**: lint Redocly/Spectral sin errores; ningún path fuera de C1–C4.
+- [x] T002 [US1] OpenAPI — Definir `openapi/identity/US1.yaml` con las 4 capacidades del backend (C1: autenticar con Google, C2: reconocer usuario existente, C3: proteger rutas no autenticadas → 401, C4: cerrar sesión). Sin desvíos respecto a los When del BDD. **Criterio**: lint Redocly/Spectral sin errores; ningún path fuera de C1–C4.
 
 ---
 
