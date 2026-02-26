@@ -67,7 +67,7 @@
 
 ## Phase 8 — Contracts
 
-- [ ] T011 [P] [US1] Contract tests — Tests provider/consumer contra `openapi/identity/US1.yaml`: verificar que `AuthController` honra exactamente el contrato (C1, C2, C4). Validar también que el filtro `shared/security` acepta el JWT propio y proporciona el `userId` correcto a los otros BCs. **Paths**: `backend/src/test/contracts/`. **Criterio**: todos los contract tests en verde; ninguna desviación del contrato OpenAPI.
+- [X] T011 [P] [US1] Contract tests
 
 ---
 
