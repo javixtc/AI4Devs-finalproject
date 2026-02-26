@@ -4,7 +4,7 @@
 **Inputs**: ./plan.md · ./spec.md · ./data-model.md · ./research.md  
 **Bounded Context nuevo**: `identity`  
 **BCs migrados**: `meditationbuilder` · `meditation.generation` · `playback`  
-**Total tareas**: 15 (feature compleja, un BC nuevo + migración de 3 BCs)
+**Total tareas**: 16 (feature compleja, un BC nuevo + migración de 3 BCs)
 
 ---
 
@@ -79,6 +79,8 @@
 
 - [X] T013 [P] [US1] E2E frontend (Playwright) — Cubrir los 5 escenarios BDD con Google mockeado (sin llamadas reales a Google en CI): login nuevo → biblioteca vacía; login recurrente → biblioteca con meditaciones; acceso a `/library` sin sesión → `/login`; cierre de sesión → pantalla de acceso; cancelación del flujo Google → pantalla de acceso sin error. **Paths**: `frontend/tests/e2e/`. **Criterio**: todos los tests Playwright en verde en chromium; `npm run test:e2e` sin fallos.
 
+- [X] T012b [P] [US1] Migración E2E backend test infrastructure — Actualizar los 3 tests E2E de los BCs existentes (`ManualCompositionE2ETest`, `AiGenerationE2ETest`, `GenerateMeditationE2ETest`) para usar JWT Bearer en lugar de llamadas no autenticadas o del header obsoleto `X-Test-User-Id`: añadir `@MockBean ValidarCredencialGooglePort` en cada clase, obtener JWT real vía `POST /v1/identity/auth/google` en `@BeforeEach`, registrar el token como `RestAssured.requestSpecification`, eliminar `X-Test-User-Id` en `GenerateMeditationE2ETest`, y añadir `@AfterEach RestAssured.reset()` en las 3 clases. **Paths**: `backend/src/test/java/.../meditationbuilder/e2e/`, `backend/src/test/java/.../meditation/generation/e2e/`. **Criterio**: Gate 7 CI (`mvn test -Dtest="**/*E2ETest*"`) con 19 tests en verde; `X-Test-User-Id` eliminado de todos los E2E backends; `ManualCompositionE2ETest` 5/5, `AiGenerationE2ETest` 7/7, `GoogleAuthE2ETest` 4/4, `GenerateMeditationE2ETest` 3/3.
+
 ---
 
 ## Phase 10 — CI/CD
@@ -148,5 +150,6 @@ Las tareas T011–T014 (contracts, E2E, CI/CD) son necesarias para el gate de en
 | T010 | `npm run generate:api` OK; ningún cliente envía `X-User-Id` |
 | T011 | `mvn failsafe:integration-test -Dtest=**/contracts/**` → verde |
 | T012 | `mvn failsafe:integration-test -Dtest=**/identity/e2e/**` → verde |
+| T012b | `mvn test -Dtest="**/*E2ETest*"` → 19 tests E2E backend verde; no `X-Test-User-Id` en `GenerateMeditationE2ETest` |
 | T013 | `npm run test:e2e` → 5 escenarios Playwright verde en chromium |
 | T014 | CI pipeline completo en verde; `VITE_USER_ID` ausente de workflows |
