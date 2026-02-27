@@ -12,3 +12,4 @@ export { GenerateMeditationButton } from './GenerateMeditationButton';
 export { GenerationResultModal } from './GenerationResultModal';
 export { AuthGuard } from './AuthGuard';
 export { AppHeader } from './AppHeader';
+export { AppFooter } from './AppFooter';

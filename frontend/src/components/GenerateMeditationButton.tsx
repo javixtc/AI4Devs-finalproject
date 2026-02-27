@@ -57,6 +57,8 @@ export function GenerateMeditationButton({
     ? 'Creating video...'
     : 'Creating podcast...';
 
+  const colorClass = outputType === 'VIDEO' ? 'btn--blue' : 'btn--navy';
+
   const isDisabled = disabled || isLoading;
 
   const handleClick = () => {
@@ -67,7 +69,7 @@ export function GenerateMeditationButton({
 
   return (
     <button
-      className={`btn btn--primary btn--large generate-meditation-button ${
+      className={`btn ${colorClass} btn--large generate-meditation-button ${
         isLoading ? 'btn--loading' : ''
       }`}
       onClick={handleClick}

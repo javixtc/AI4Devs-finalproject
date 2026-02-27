@@ -54,26 +54,12 @@ export function MusicSelectorButton({
       />
       <button
         onClick={handleButtonClick}
-        className="music-selector-button"
+        className={`btn btn--orange music-selector-button${disabled ? ' btn--disabled' : ''}`}
         type="button"
         disabled={disabled}
         data-testid="music-selector-button"
-        style={{
-          backgroundColor: '#9b59b6',
-          color: 'white',
-          border: 'none',
-          padding: '8px 16px',
-          borderRadius: '4px',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          opacity: disabled ? 0.6 : 1,
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          fontSize: '14px',
-          fontWeight: 500,
-        }}
       >
-        <span style={{ fontSize: '18px' }}>🎵</span>
+        <span>🎵</span>
         Select music
       </button>
     </>

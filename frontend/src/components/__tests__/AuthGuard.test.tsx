@@ -83,8 +83,8 @@ describe('AuthGuard', () => {
 
     it('should render navigation links', () => {
       render(<TestApp initialPath="/" />);
-      expect(screen.getByRole('link', { name: /crear meditación/i })).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /biblioteca/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /create meditation/i })).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /library/i })).toBeInTheDocument();
     });
 
     it('should NOT redirect to /login', () => {

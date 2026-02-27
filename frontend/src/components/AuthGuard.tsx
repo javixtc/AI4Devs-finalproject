@@ -12,9 +12,10 @@
  *   </Route>
  */
 
-import { Navigate, Outlet, NavLink } from 'react-router-dom';
+import { Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@state/authStore';
 import { AppHeader } from './AppHeader';
+import { AppFooter } from './AppFooter';
 
 export function AuthGuard() {
   const session = useAuthStore((state) => state.session);
@@ -25,30 +26,11 @@ export function AuthGuard() {
 
   return (
     <div className="app">
-      {/* App header — name, photo, logout (C4) */}
       <AppHeader />
-
-      {/* Navigation — only shown when authenticated */}
-      <nav className="app-nav">
-        <ul>
-          <li>
-            <NavLink to="/" className={({ isActive }) => (isActive ? 'nav-active' : '')}>
-              Crear Meditación
-            </NavLink>
-          </li>
-          <li>
-            <NavLink
-              to="/library"
-              className={({ isActive }) => (isActive ? 'nav-active' : '')}
-            >
-              Biblioteca
-            </NavLink>
-          </li>
-        </ul>
-      </nav>
-
-      {/* Authenticated child route */}
-      <Outlet />
+      <main className="app__main">
+        <Outlet />
+      </main>
+      <AppFooter />
     </div>
   );
 }
