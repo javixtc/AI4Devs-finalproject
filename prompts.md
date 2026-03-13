@@ -218,62 +218,83 @@ Todo el contenido debe estar orientado a servir como documentación fundacional 
 ### **2.2. Descripción de componentes principales:**
 
 **Prompt 1:**
+Based on the hexagonal architecture we defined, describe the main components of Meditation Builder in detail: the 4 Bounded Contexts (identity, meditationbuilder, meditation.generation, playback), their responsibilities, the ports and adapters pattern within each one, and their dependencies. Explain why no BC should have a direct domain dependency on another.
 
 **Prompt 2:**
+For the meditation.generation BC, explain the internal pipeline components: GoogleCloudTtsAdapter, OpenAiImageAdapter, FfmpegRenderAdapter, and S3StorageAdapter. For each one define: the output port interface it implements, its constructor dependencies, its main method signature, and how errors are propagated up to the use case. The pipeline is synchronous — no queues.
 
 **Prompt 3:**
+Describe the shared infrastructure component BearerTokenFilter. It must: extract the userId from the backend-issued JWT on every protected request, inject it into the Spring SecurityContext, return 401 for missing or invalid tokens, and have zero knowledge of any bounded context. Show the Spring Security configuration class that registers it.
 
 ### **2.3. Descripción de alto nivel del proyecto y estructura de ficheros**
 
 **Prompt 1:**
+Generate the exact Maven folder structure for a Spring Boot Java 21 project with hexagonal architecture and 4 Bounded Contexts: identity, meditationbuilder, meditation.generation, playback. Each BC must have domain/, application/, infrastructure/, and controllers/ layers. Include the shared/ package for cross-cutting concerns. Show the test folder mirroring the main structure with bdd/, e2e/, and contracts/ directories.
 
 **Prompt 2:**
+For the frontend, generate the folder structure for a React + TypeScript Vite project with: auto-generated OpenAPI clients in src/api/generated/, React Query hooks in src/hooks/, Zustand stores in src/state/, and Playwright E2E tests in tests/e2e/. Explain the role of each folder and how the generate:api npm script connects the backend OpenAPI spec to the frontend clients.
 
 **Prompt 3:**
+Explain how OpenAPI-first development works in this project: we define the YAML spec first in backend/src/main/resources/openapi/<bc>/, then the controller must match it exactly (contract tests enforce this), and npm run generate:api generates the TypeScript client for the frontend. Show a concrete example with the identity BC authentication endpoint.
 
 ### **2.4. Infraestructura y despliegue**
 
 **Prompt 1:**
+Create a docker-compose.yml for local development that starts: LocalStack (for S3 emulation on port 4566) and PostgreSQL 15 (port 5432). Include a health-check for each service and environment variable defaults matching the application-local.yml.example. Add a bash init script (init-localstack.sh) that creates the meditation-builder S3 bucket after LocalStack starts.
 
 **Prompt 2:**
+Design the GitHub Actions CI pipeline for the backend with exactly 8 sequential gates: (1) BDD Cucumber, (2) OpenAPI lint, (3) Unit domain tests, (4) Unit application tests, (5) Infrastructure integration tests with Testcontainers, (6) Contract tests, (7) E2E tests, (8) Maven package build. Each gate must fail fast and must not run if a previous gate fails. Add the required secrets: GOOGLE_CLIENT_ID, OPENAI_API_KEY, JWT_SECRET.
 
 **Prompt 3:**
+Describe the production deployment topology: React SPA on Vercel (automatic deploy on push to main, VITE_GOOGLE_CLIENT_ID env var), Spring Boot JAR on Render.com (Docker, 512MB RAM minimum for FFmpeg), PostgreSQL on Neon.tech serverless (connection pooling via PgBouncer), media assets on AWS S3 us-east-1. Explain how Flyway migrations run automatically at Spring Boot startup.
 
 ### **2.5. Seguridad**
 
 **Prompt 1:**
+We decided to replace AWS Cognito with Google OAuth2 + a backend-issued JWT. Implement the full auth flow: the frontend sends the Google id_token to POST /api/v1/identity/auth/google; the backend validates it against Google's JWKS public endpoint using Spring Security OAuth2 Resource Server; if valid, it issues its own HS256 JWT (24h expiry, userId as subject) and returns it. The backend JWT is then used as Bearer token for all subsequent requests. Show the Spring Security configuration and the JWKS validation bean.
 
 **Prompt 2:**
+Implement ownership enforcement for the meditation generation use case. The GenerateMeditationUseCase must: retrieve the composition by compositionId, verify that composition.userId equals the userId extracted from the SecurityContext, throw a ForbiddenException if they differ (mapped to HTTP 403 by the controller), and never leak another user's data in error messages. Add a unit test that verifies the 403 path.
 
 **Prompt 3:**
+For S3 media storage, implement pre-signed URL generation in S3StreamingAdapter: URLs must expire after 3600 seconds (1 hour), use GET method only, and be generated per-request (never cached or stored in the DB). Add a LocalStack integration test that verifies the generated URL is accessible and returns the correct content type for video.mp4 and audio.mp3.
 
 ### **2.6. Tests**
 
 **Prompt 1:**
+Set up Cucumber BDD for the identity Bounded Context. Create the feature file features/identity/US1.feature with 5 scenarios (new user login, returning user login, protected route access without auth, logout, OAuth cancellation). Create the Spring Boot test configuration class IdentityCucumberSpringConfiguration with @CucumberContextConfiguration, a @MockBean for ValidarCredencialGooglePort, and a @Before hook that calls POST /v1/identity/auth/google to obtain a real JWT. All step definitions must start in PENDING state.
 
 **Prompt 2:**
+For the meditation.generation BC, write integration tests using WireMock for the external service adapters. GoogleCloudTtsAdapterIT must: start WireMock on a random port, stub POST /v1/text:synthesize to return a base64-encoded MP3, call the adapter, and verify the returned byte array is non-empty. A second test stubs a 500 response and verifies the adapter throws a TtsGenerationException. Do not call the real Google TTS API in any test.
 
 **Prompt 3:**
+Design the frontend test strategy. Unit tests use Vitest + React Testing Library. Integration tests add MSW (Mock Service Worker) to intercept API calls — one handler per endpoint. Playwright E2E tests in tests/e2e/ must cover the 5 BDD scenarios for US1 using a mocked Google OAuth flow (inject a fake id_token via page.evaluate before clicking the Google button). Show the msw/handlers.ts structure and the Playwright fixture for authenticated state.
 
 ---
 
 ### 3. Modelo de Datos
 
 **Prompt 1:**
+Design the PostgreSQL data model for Meditation Builder using two schemas: identity and generation. The identity.users table stores Google OAuth profiles (id UUID PK, google_id TEXT UNIQUE NOT NULL, email TEXT UNIQUE NOT NULL, name TEXT, picture TEXT, created_at TIMESTAMP). The generation.meditations table stores generated meditations with a FK to identity.users. Include the ENUM types for status (PROCESSING, COMPLETED, FAILED, TIMEOUT) and type (AUDIO, VIDEO). Generate the Flyway migration SQL files with versioned naming convention V1__, V2__, etc.
 
 **Prompt 2:**
+We decided not to use a separate jobs table because generation is synchronous. Explain in the data model documentation why there is no generation_jobs table, how status transitions work within generation.meditations (PROCESSING on insert → COMPLETED or FAILED on pipeline result → TIMEOUT if threshold exceeded), and what indexes to add for the most frequent query patterns: list by user_id ordered by created_at DESC, and lookup by id + user_id for ownership validation.
 
 **Prompt 3:**
+Write the complete ER diagram in Mermaid erDiagram notation for both schemas, including all field names, types, constraints (PK, FK, unique, not null), and the cardinality of the relationship between identity.users and generation.meditations. Also document the S3 key convention (generation/{userId}/{meditationId}/video.mp4 etc.) as a separate section in the data model doc since those paths are derived at runtime and not stored as FKs.
 
 ---
 
 ### 4. Especificación de la API
 
 **Prompt 1:**
+Using OpenAPI 3.0 YAML, write the complete spec for the identity BC (file: openapi/identity/US1.yaml). It must define: POST /api/v1/identity/auth/google (request body with idToken string, responses 200 with token/userId/name/email/picture and 401), POST /api/v1/identity/auth/logout (Bearer auth required, response 204), and a reusable SecurityScheme component named BearerAuth. The spec must pass Redocly lint with no errors and must not include any endpoint not covered by the US1 BDD scenarios.
 
 **Prompt 2:**
+Write the OpenAPI spec for the meditation.generation BC (openapi/generation/US3.yaml). The POST /api/v1/generation/{meditationId}/generate endpoint must: require BearerAuth, accept a path parameter meditationId (UUID format), return 201 with meditationId/type/mediaUrl/subtitleUrl/status on success, and document all error responses: 401 (no token), 403 (not owner), 404 (not found), 500 (pipeline failure). Include a concrete JSON example for the 201 response.
 
 **Prompt 3:**
+Implement contract tests for the AuthController using Spring Cloud Contract or a RestAssured provider test against the US1.yaml OpenAPI spec. The test must: load the YAML spec, start the Spring context with @SpringBootTest, send a POST /api/v1/identity/auth/google request with a mocked Google id_token (WireMock stubs the JWKS endpoint), and assert that the response structure (field names, types, HTTP status) exactly matches the spec. Add this test to CI gate 6 (Contract Tests).
 
 ---
 
@@ -323,7 +344,10 @@ I need you to generate a fully written, copy/paste-ready final prompt. This prom
 ### 7. Pull Requests
 
 **Prompt 1:**
+Write a GitHub Pull Request description for the branch feature/us1-google-oauth-identity targeting feature-entrega3-JVC. The PR implements the complete identity Bounded Context: PerfilDeUsuario aggregate, IniciarSesionConGoogleUseCase, JWKS validation adapter, JWT issuer, AuthController, BearerTokenFilter, Flyway migration V3__create_identity_users.sql, migration of existing BC controllers from X-User-Id header to SecurityContext, and the frontend LoginPage + AuthGuard + authStore. Include: summary, motivation, list of key changed files, CI gates status, and a reviewer checklist with items for domain purity, contract compliance, and header removal.
 
 **Prompt 2:**
+Review this Pull Request and identify any violations of our hexagonal architecture rules: (1) domain classes must not import Spring or infrastructure types, (2) use cases must only orchestrate — no business logic, (3) controllers must not contain business logic and must delegate 100% to use cases, (4) infrastructure adapters must implement domain output ports. For each violation found, explain why it breaks the rule and suggest the correct refactoring.
 
 **Prompt 3:**
+Write the Pull Request description for feature/us3-multimedia-generation. This PR implements the synchronous generation pipeline in the meditation.generation BC. Key points to highlight: the decision to use synchronous HTTP processing instead of SQS/async workers (and why), the FFmpeg binary dependency (how it is detected at startup), the WireMock-only policy for Google TTS and OpenAI tests (no real API calls), and the Testcontainers LocalStack setup for S3 integration tests. Include a risk section noting the long HTTP response time (~30–180s) and how the 187s timeout is configured.

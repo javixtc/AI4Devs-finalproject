@@ -8,12 +8,22 @@ Este documento explica cómo compilar y levantar el backend y frontend del proye
 - Maven 3.8+
 - Node.js 18+ y npm
 
+## Infrastructure (Docker)
+
+Arranca los containers LocalStack (S3), PostgreSQL y ffmpeg via Docker Compose antes de ejecutar el backend:
+
+```sh
+cd backend
+docker-compose up -d
+```
+
+
+
 ## Backend (Spring Boot)
 
 1. **Compilar el backend:**
 
    ```sh
-   cd backend
    mvn clean install -DskipTests
    ```
 
@@ -46,7 +56,7 @@ Este documento explica cómo compilar y levantar el backend y frontend del proye
    npm run dev
    ```
 
-   El frontend estará disponible por defecto en `http://localhost:3010`.
+   El frontend estará disponible por defecto en `http://localhost:3011`.
 
 ## Notas
 
