@@ -67,7 +67,7 @@ The application follows a linear, single-page flow:
 3. **Compose** (`/compose`) — split form: left panel for content fields; right panel for real-time AI generation toggles and preview. A dynamic indicator switches between "podcast" (no image) and "video" (with image).
 4. **Player** (`/player/:id`) — HTML5 `<video>` player for MP4 with subtitle track; falls back to `<audio>` for MP3-only meditations.
 
-Screenshots and a video walkthrough are available in the `/docs/` folder.
+Screenshots and a video walkthrough are available in the `/docs/quick-start` folder.
 
 ### **1.4. Installation instructions**
 
